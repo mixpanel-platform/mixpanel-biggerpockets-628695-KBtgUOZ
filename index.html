@@ -102,6 +102,7 @@
 
         $("#reports_dropdown").MPSelect({
             items: [
+                { 'value': 'find_dupes', 'label': 'Find Duplicate Profiles'},
                 { 'value': 'getting_started', 'label': 'Events Associated with Upgrade'},
                 { 'value': 'segmentation', 'label': 'Segmentation'},
                 { 'value': 'groupby', 'label': 'Simple groupBy' },
@@ -385,6 +386,47 @@ function main() {
 </script>
 
 <script type="text/cq" id="getting_started_params">
+{
+}
+</script>
+
+<script type="text/cq" id="find_dupes_query">
+function summarize(accums, items) {
+    var count = items.length;
+     _.chain(accums)
+     .pluck('count')
+     .each(function(accum) {count += accum;});
+    var profiles = [];
+    _.each(accums, function(accum) {
+        _.each(accum.profiles, function(profile) {profiles.push(profile);});
+    });
+    _.each(items, function(item) {profiles.push({distinct_id: item.distinct_id, time: item.time, properties: item.properties});});
+    _.sortBy(profiles, 'time');
+    _.each(profiles, function(profile) {profile.last_seen = new Date(profile.time / 1000);});
+    return {
+        count: count,
+        profiles: profiles
+    };
+}
+
+function main() {
+  // Take all events in the given date range.
+  return People({})
+  .filter(function(item) {return item.properties.$email && Math.random() < .001;})
+  .groupBy(['properties.$email'], summarize)
+  .filter(function(item) {return item.value.count > 1;})
+  .map(function(item) {
+  	var person = {};
+  	person.email = item.key[0];
+  	person.num_profiles = item.value.count;
+  	person.original_profile = item.value.profiles[0];
+  	person.bad_profiles = _.filter(item.value.profiles, function(profile) {return profile != person.original_profile;});
+  	return person;
+  });
+}
+</script>
+
+<script type="text/cq" id="find_dupes_params">
 {
 }
 </script>
