@@ -378,7 +378,6 @@ function main() {
       });
       return state;
     })
-  // Only keep entries where num_days_active property is at least 5.
   .filter(function(item) {return item.value.done;})
   .map(function(item) {return item.value.event_list;})
   .reduce(mixpanel.reducer.object_merge());
