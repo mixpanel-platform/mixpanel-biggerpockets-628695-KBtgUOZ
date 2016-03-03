@@ -102,7 +102,7 @@
 
         $("#reports_dropdown").MPSelect({
             items: [
-                { 'value': 'getting_started', 'label': 'Getting Started'},
+                { 'value': 'getting_started', 'label': 'Events Associated with Upgrade'},
                 { 'value': 'segmentation', 'label': 'Segmentation'},
                 { 'value': 'groupby', 'label': 'Simple groupBy' },
                 { 'value': 'top_email_providers', 'label': 'Top email providers' },
@@ -369,26 +369,19 @@ function main() {
   })
   // Group them by user distinct_id, and call the provided function.
   .groupByUser(function(state, events) {
-      state = state || {
-        last_day_active: new Date(0),
-        num_days_active: 0,
-        city: events[0]['$city'],
-      };
-      for (var i = 0; i < events.length; ++i) {
-        var event_time = new Date(events[i]['time']);
-        var event_day = new Date(event_time.getFullYear(),
-                                 event_time.getMonth(),
-                                 event_time.getDate());
-        if (event_day > state.last_day_active) {
-          ++state.num_days_active;
-          state.last_day_active = event_day;
-        }
-      }
+      state = state || {event_list: {}};
+      _.each(events, function(event) {
+          state.event_list[event.name] = state.event_list[event.name] + 1 || 1;
+          if (event.name == 'Upgraded to Paid Plan') {
+              state.done = true;
+          }
+      })
       return state;
     })
   // Only keep entries where num_days_active property is at least 5.
-  .filter(function(item) { return item.value.num_days_active >= 5; })
-  .groupBy([function(item){return item.value.city;}], mixpanel.reducer.count());
+  .filter(function(item) {return item.value.done;})
+  .map(function(item) {return item.value.event_list;})
+  .reduce(mixpanel.reducer.object_merge())
 }
 </script>
 
