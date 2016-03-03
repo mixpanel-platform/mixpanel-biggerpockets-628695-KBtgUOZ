@@ -414,7 +414,6 @@ function main() {
   return People({})
   .filter(function(item) {return item.properties.$email && Math.random() < .001;})
   .groupBy(['properties.$email'], summarize)
-  .filter(function(item) {return item.value.count > 1;})
   .map(function(item) {
   	var person = {};
   	person.email = item.key[0];
